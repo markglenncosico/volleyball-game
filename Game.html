@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arcade Beach Volleyball</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .header h1 {
+      font-size: 1.8rem;
+      letter-spacing: 1px;
+      color: #38bdf8;
+      text-shadow: 0 2px 10px rgba(56, 189, 248, 0.3);
+    }
+
+    .scoreboard {
+      display: flex;
+      gap: 28px;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid #334155;
+      padding: 10px 24px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    .score-box {
+      text-align: center;
+      min-width: 115px;
+    }
+
+    .score-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #94a3b8;
+    }
+
+    .score-val {
+      font-size: 1.9rem;
+      font-weight: 800;
+    }
+
+    .player-score { color: #38bdf8; }
+    .cpu-score { color: #fb7185; }
+
+    .target-badge {
+      background: #1e293b;
+      border: 1px solid #475569;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      color: #cbd5e1;
+      text-align: center;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 2px solid #334155;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
+    }
+
+    canvas {
+      display: block;
+      background: #87ceeb;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.86);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      backdrop-filter: blur(4px);
+    }
+
+    .overlay.hidden {
+      display: none;
+    }
+
+    .overlay h2 {
+      font-size: 2rem;
+      margin-bottom: 8px;
+      color: #f8fafc;
+    }
+
+    .overlay p {
+      color: #cbd5e1;
+      max-width: 480px;
+      line-height: 1.5;
+      margin-bottom: 18px;
+      font-size: 0.95rem;
+    }
+
+    .setup-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background: rgba(30, 41, 59, 0.9);
+      border: 1px solid #475569;
+      padding: 16px 22px;
+      border-radius: 12px;
+      margin-bottom: 18px;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .option-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      text-align: left;
+    }
+
+    .option-row.hidden {
+      display: none;
+    }
+
+    .option-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    .toggle-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      background: #0f172a;
+      color: #cbd5e1;
+      border: 1px solid #334155;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .toggle-btn:hover {
+      border-color: #38bdf8;
+      background: #1e293b;
+      transform: none;
+    }
+
+    .toggle-btn.active {
+      background: #0284c7;
+      color: #ffffff;
+      border-color: #38bdf8;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button.primary {
+      background: #0284c7;
+      color: white;
+      border: none;
+      padding: 11px 24px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.15s ease;
+    }
+
+    button.primary:hover {
+      background: #0369a1;
+      transform: translateY(-1px);
+    }
+
+    button.secondary {
+      background: #334155;
+      color: #f8fafc;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    button.secondary:hover {
+      background: #475569;
+    }
+
+    .controls-bar {
+      margin-top: 12px;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+
+    kbd {
+      background: #1e293b;
+      border: 1px solid #475569;
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: #e2e8f0;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>ARCADE BEACH VOLLEYBALL</h1>
+  </div>
+
+  <div class="scoreboard">
+    <div class="score-box">
+      <div class="score-label" id="leftLabel">Player 1 (Left)</div>
+      <div class="score-val player-score" id="playerScore">0</div>
+    </div>
+    <div class="target-badge" id="modeBadge">1P vs CPU (Normal) • First to 7</div>
+    <div class="score-box">
+      <div class="score-label" id="rightLabel">CPU AI (Right)</div>
+      <div class="score-val cpu-score" id="cpuScore">0</div>
+    </div>
+  </div>
+
+  <div class="canvas-wrap">
+    <canvas id="gameCanvas" width="840" height="440"></canvas>
+
+    <div class="overlay" id="overlay">
+      <h2 id="overlayTitle">Beach Volleyball</h2>
+      <p id="overlayDesc">
+        Hit the volleyball over the net and land it on your opponent's sand court!
+      </p>
+
+      <div class="setup-panel">
+        <div class="option-row">
+          <span class="option-title">Game Mode</span>
+          <div class="toggle-group" id="modeGroup">
+            <button type="button" class="toggle-btn active" data-mode="1p">1P vs CPU</button>
+            <button type="button" class="toggle-btn" data-mode="2p">2P Local Match</button>
+          </div>
+        </div>
+
+        <div class="option-row" id="difficultyRow">
+          <span class="option-title">CPU Difficulty</span>
+          <div class="toggle-group" id="diffGroup">
+            <button type="button" class="toggle-btn" data-diff="easy">Easy</button>
+            <button type="button" class="toggle-btn active" data-diff="normal">Normal</button>
+            <button type="button" class="toggle-btn" data-diff="hard">Hard</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="primary" id="startBtn">Start Match</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls-bar" id="controlsBar">
+    <span><strong>P1:</strong> <kbd>A</kbd> <kbd>D</kbd> Move • <kbd>W</kbd> Jump</span>
+    <span id="p2ControlsHint"><strong>CPU Mode:</strong> Or use <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> / <kbd>Space</kbd></span>
+    <button class="secondary" id="menuBtn">Change Mode / Difficulty</button>
+    <button class="secondary" id="resetBtn">Reset Match</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const overlay = document.getElementById('overlay');
+    const overlayTitle = document.getElementById('overlayTitle');
+    const overlayDesc = document.getElementById('overlayDesc');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const menuBtn = document.getElementById('menuBtn');
+    const playerScoreEl = document.getElementById('playerScore');
+    const cpuScoreEl = document.getElementById('cpuScore');
+    const leftLabel = document.getElementById('leftLabel');
+    const rightLabel = document.getElementById('rightLabel');
+    const modeBadge = document.getElementById('modeBadge');
+    const p2ControlsHint = document.getElementById('p2ControlsHint');
+    const difficultyRow = document.getElementById('difficultyRow');
+
+    const W = canvas.width;
+    const H = canvas.height;
+    const GROUND_Y = H - 55;
+    const GRAVITY = 0.45;
+    const WIN_SCORE = 7;
+
+    const net = {
+      x: W / 2 - 5,
+      y: GROUND_Y - 125,
+      w: 10,
+      h: 125
+    };
+
+    const keys = {};
+    window.addEventListener('keydown', (e) => {
+      keys[e.code] = true;
+      if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+        e.preventDefault();
+      }
+    });
+    window.addEventListener('keyup', (e) => {
+      keys[e.code] = false;
+    });
+
+    let gameMode = '1p'; // '1p' or '2p'
+    let difficulty = 'normal'; // 'easy', 'normal', 'hard'
+    let gameState = 'menu'; // menu, playing, pointPause, gameover
+    let playerScore = 0;
+    let cpuScore = 0;
+    let statusBanner = '';
+    let bannerTimer = 0;
+
+    const DIFFICULTY_CONFIG = {
+      easy: { speed: 3.3, jumpPower: -10.5, reactionOffset: 24, jumpChance: 0.45, label: 'Easy' },
+      normal: { speed: 4.6, jumpPower: -11.3, reactionOffset: 12, jumpChance: 0.85, label: 'Normal' },
+      hard: { speed: 5.8, jumpPower: -12.0, reactionOffset: 4, jumpChance: 1.0, label: 'Hard' }
+    };
+
+    const player1 = {
+      x: 180,
+      y: GROUND_Y,
+      r: 32,
+      vx: 0,
+      vy: 0,
+      speed: 5.5,
+      jumpPower: -11.5,
+      color: '#0284c7',
+      eyeOffset: 10
+    };
+
+    const player2 = {
+      x: W - 180,
+      y: GROUND_Y,
+      r: 32,
+      vx: 0,
+      vy: 0,
+      speed: 5.5,
+      jumpPower: -11.5,
+      color: '#e11d48',
+      eyeOffset: -10
+    };
+
+    const ball = {
+      x: 200,
+      y: 160,
+      r: 16,
+      vx: 0,
+      vy: 0,
+      rotation: 0
+    };
+
+    // Toggle button handlers
+    document.querySelectorAll('#modeGroup .toggle-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#modeGroup .toggle-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        gameMode = btn.dataset.mode;
+        difficultyRow.classList.toggle('hidden', gameMode === '2p');
+        updateModeLabels();
+      });
+    });
+
+    document.querySelectorAll('#diffGroup .toggle-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#diffGroup .toggle-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        difficulty = btn.dataset.diff;
+        updateModeLabels();
+      });
+    });
+
+    function updateModeLabels() {
+      if (gameMode === '1p') {
+        const diffLabel = DIFFICULTY_CONFIG[difficulty].label;
+        leftLabel.textContent = 'Player (Left)';
+        rightLabel.textContent = `CPU ${diffLabel} (Right)`;
+        modeBadge.textContent = `1P vs CPU (${diffLabel}) • First to 7`;
+        p2ControlsHint.innerHTML = '<strong>Solo Controls:</strong> <kbd>A</kbd><kbd>D</kbd><kbd>W</kbd> or <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd>/<kbd>Space</kbd>';
+      } else {
+        leftLabel.textContent = 'Player 1 (Left)';
+        rightLabel.textContent = 'Player 2 (Right)';
+        modeBadge.textContent = '2P Local Match • First to 7';
+        p2ControlsHint.innerHTML = '<strong>P2:</strong> <kbd>←</kbd> <kbd>→</kbd> Move • <kbd>↑</kbd> Jump';
+      }
+    }
+
+    function resetPositions(server = 'p1') {
+      player1.x = 180;
+      player1.y = GROUND_Y;
+      player1.vx = 0;
+      player1.vy = 0;
+
+      player2.x = W - 180;
+      player2.y = GROUND_Y;
+      player2.vx = 0;
+      player2.vy = 0;
+
+      ball.y = 140;
+      ball.vy = 0;
+      ball.vx = 0;
+      ball.rotation = 0;
+
+      ball.x = server === 'p1' ? 200 : W - 200;
+    }
+
+    function startNewMatch() {
+      updateModeLabels();
+      if (gameMode === '1p') {
+        const cfg = DIFFICULTY_CONFIG[difficulty];
+        player2.speed = cfg.speed;
+        player2.jumpPower = cfg.jumpPower;
+      } else {
+        player2.speed = 5.5;
+        player2.jumpPower = -11.5;
+      }
+
+      playerScore = 0;
+      cpuScore = 0;
+      updateScoreUI();
+      resetPositions('p1');
+      statusBanner = 'Serve!';
+      bannerTimer = 60;
+      gameState = 'playing';
+      overlay.classList.add('hidden');
+    }
+
+    function openMenuOverlay() {
+      gameState = 'menu';
+      overlayTitle.textContent = 'Match Setup';
+      overlayDesc.textContent = 'Choose 1-Player vs CPU or 2-Player Local Mode, then hit Start Match.';
+      startBtn.textContent = 'Start Match';
+      overlay.classList.remove('hidden');
+    }
+
+    function updateScoreUI() {
+      playerScoreEl.textContent = playerScore;
+      cpuScoreEl.textContent = cpuScore;
+    }
+
+    startBtn.addEventListener('click', startNewMatch);
+    resetBtn.addEventListener('click', startNewMatch);
+    menuBtn.addEventListener('click', openMenuOverlay);
+
+    function handlePlayer1Input() {
+      player1.vx = 0;
+
+      if (gameMode === '1p') {
+        if (keys['KeyA'] || keys['ArrowLeft']) player1.vx = -player1.speed;
+        if (keys['KeyD'] || keys['ArrowRight']) player1.vx = player1.speed;
+        if ((keys['KeyW'] || keys['ArrowUp'] || keys['Space']) && player1.y >= GROUND_Y) {
+          player1.vy = player1.jumpPower;
+        }
+      } else {
+        // Strict WASD for Player 1 in 2P mode
+        if (keys['KeyA']) player1.vx = -player1.speed;
+        if (keys['KeyD']) player1.vx = player1.speed;
+        if (keys['KeyW'] && player1.y >= GROUND_Y) {
+          player1.vy = player1.jumpPower;
+        }
+      }
+
+      player1.x += player1.vx;
+      player1.y += player1.vy;
+      if (player1.y < GROUND_Y) {
+        player1.vy += GRAVITY;
+      } else {
+        player1.y = GROUND_Y;
+        player1.vy = 0;
+      }
+
+      // Left court boundaries
+      if (player1.x - player1.r < 12) player1.x = 12 + player1.r;
+      if (player1.x + player1.r > net.x - 4) player1.x = net.x - 4 - player1.r;
+    }
+
+    function handleRightSideController() {
+      if (gameMode === '2p') {
+        player2.vx = 0;
+        if (keys['ArrowLeft']) player2.vx = -player2.speed;
+        if (keys['ArrowRight']) player2.vx = player2.speed;
+        if (keys['ArrowUp'] && player2.y >= GROUND_Y) {
+          player2.vy = player2.jumpPower;
+        }
+      } else {
+        // CPU AI logic scaled by difficulty
+        const cfg = DIFFICULTY_CONFIG[difficulty];
+        let targetX = W - 170;
+
+        if (ball.x > W / 2 - 40) {
+          // Hard AI predicts trajectory slightly ahead
+          const lookAhead = difficulty === 'hard' ? ball.vx * 4 : (difficulty === 'normal' ? ball.vx * 1.5 : 0);
+          targetX = ball.x + lookAhead + cfg.reactionOffset;
+        } else {
+          targetX = difficulty === 'hard' ? W * 0.68 : W * 0.74;
+        }
+
+        const diff = targetX - player2.x;
+        if (Math.abs(diff) > 8) {
+          player2.vx = diff > 0 ? player2.speed : -player2.speed;
+        } else {
+          player2.vx = 0;
+        }
+
+        const jumpRange = difficulty === 'hard' ? 75 : 62;
+        if (
+          ball.x > W / 2 + 8 &&
+          Math.abs(ball.x - player2.x) < jumpRange &&
+          ball.y > GROUND_Y - 175 &&
+          ball.y < GROUND_Y - 40 &&
+          player2.y >= GROUND_Y &&
+          Math.random() < cfg.jumpChance
+        ) {
+          player2.vy = player2.jumpPower;
+        }
+      }
+
+      player2.x += player2.vx;
+      player2.y += player2.vy;
+      if (player2.y < GROUND_Y) {
+        player2.vy += GRAVITY;
+      } else {
+        player2.y = GROUND_Y;
+        player2.vy = 0;
+      }
+
+      // Right court boundaries
+      if (player2.x - player2.r < net.x + net.w + 4) player2.x = net.x + net.w + 4 + player2.r;
+      if (player2.x + player2.r > W - 12) player2.x = W - 12 - player2.r;
+    }
+
+    function collideEntityWithBall(entity, isLeftSide) {
+      const dx = ball.x - entity.x;
+      const dy = ball.y - entity.y;
+      const dist = Math.hypot(dx, dy);
+      const minDist = entity.r + ball.r;
+
+      if (dist < minDist && ball.y <= entity.y + 10) {
+        const angle = Math.atan2(dy, dx);
+        ball.x = entity.x + Math.cos(angle) * minDist;
+        ball.y = entity.y + Math.sin(angle) * minDist;
+
+        const isJumping = entity.y < GROUND_Y - 5;
+        let hitPower = isJumping ? 10.9 : 9.0;
+
+        if (!isLeftSide && gameMode === '1p' && difficulty === 'hard' && isJumping) {
+          hitPower = 11.8; // Aggressive spike on Hard AI
+        }
+
+        ball.vx = Math.cos(angle) * hitPower + entity.vx * 0.35;
+        ball.vy = Math.sin(angle) * hitPower - (isJumping ? 1.2 : 2.5);
+
+        if (isLeftSide && ball.vx < 2.5) ball.vx = 3.2;
+        if (!isLeftSide && ball.vx > -2.5) ball.vx = -3.2;
+
+        const speed = Math.hypot(ball.vx, ball.vy);
+        if (speed > 13.8) {
+          ball.vx = (ball.vx / speed) * 13.8;
+          ball.vy = (ball.vy / speed) * 13.8;
+        }
+      }
+    }
+
+    function updateBall() {
+      ball.vy += GRAVITY * 0.72;
+      ball.x += ball.vx;
+      ball.y += ball.vy;
+      ball.rotation += ball.vx * 0.04;
+
+      if (ball.x - ball.r < 0) {
+        ball.x = ball.r;
+        ball.vx *= -0.82;
+      }
+      if (ball.x + ball.r > W) {
+        ball.x = W - ball.r;
+        ball.vx *= -0.82;
+      }
+
+      if (ball.y - ball.r < 0) {
+        ball.y = ball.r;
+        ball.vy *= -0.6;
+      }
+
+      // Net collision
+      if (
+        ball.x + ball.r > net.x &&
+        ball.x - ball.r < net.x + net.w &&
+        ball.y + ball.r > net.y
+      ) {
+        if (ball.y - ball.vy <= net.y) {
+          ball.y = net.y - ball.r;
+          ball.vy = -Math.abs(ball.vy) * 0.75;
+        } else if (ball.x < net.x + net.w / 2) {
+          ball.x = net.x - ball.r;
+          ball.vx = -Math.abs(ball.vx) * 0.75;
+        } else {
+          ball.x = net.x + net.w + ball.r;
+          ball.vx = Math.abs(ball.vx) * 0.75;
+        }
+      }
+
+      collideEntityWithBall(player1, true);
+      collideEntityWithBall(player2, false);
+
+      // Ground scoring
+      if (ball.y + ball.r >= GROUND_Y) {
+        ball.y = GROUND_Y - ball.r;
+        if (ball.x < W / 2) {
+          cpuScore++;
+          updateScoreUI();
+          handlePointScored('p2');
+        } else {
+          playerScore++;
+          updateScoreUI();
+          handlePointScored('p1');
+        }
+      }
+    }
+
+    function handlePointScored(winner) {
+      const p1Name = gameMode === '2p' ? 'Player 1' : 'Player';
+      const p2Name = gameMode === '2p' ? 'Player 2' : 'CPU';
+
+      if (playerScore >= WIN_SCORE || cpuScore >= WIN_SCORE) {
+        gameState = 'gameover';
+        const p1Won = playerScore >= WIN_SCORE;
+        overlayTitle.textContent = p1Won ? `${p1Name} Wins!` : `${p2Name} Wins!`;
+        overlayDesc.textContent = `Final Score — ${p1Name}: ${playerScore} | ${p2Name}: ${cpuScore}. Change settings below or hit Play Again!`;
+        startBtn.textContent = 'Play Again';
+        overlay.classList.remove('hidden');
+        return;
+      }
+
+      gameState = 'pointPause';
+      statusBanner = winner === 'p1' ? `Point: ${p1Name}!` : `Point: ${p2Name}!`;
+      bannerTimer = 65;
+      setTimeout(() => {
+        if (gameState === 'pointPause') {
+          resetPositions(winner);
+          gameState = 'playing';
+        }
+      }, 950);
+    }
+
+    function drawBackground() {
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+      skyGrad.addColorStop(0, '#38bdf8');
+      skyGrad.addColorStop(1, '#bae6fd');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, W, GROUND_Y);
+
+      ctx.beginPath();
+      ctx.arc(W - 110, 75, 34, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(253, 224, 71, 0.9)';
+      ctx.fill();
+
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(0, GROUND_Y - 26, W, 26);
+
+      ctx.fillStyle = '#fde68a';
+      ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y);
+
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(12, GROUND_Y, W - 24, 5);
+    }
+
+    function drawNet() {
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(net.x, net.y, net.w, net.h);
+
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(net.x - 2, net.y, net.w + 4, 10);
+    }
+
+    function drawSlimeCharacter(entity) {
+      ctx.save();
+      const shadowScale = 1 - (GROUND_Y - entity.y) / 260;
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.beginPath();
+      ctx.ellipse(entity.x, GROUND_Y + 4, entity.r * Math.max(0.4, shadowScale), 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(entity.x, entity.y, entity.r, Math.PI, 0, false);
+      ctx.closePath();
+      ctx.fillStyle = entity.color;
+      ctx.fill();
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#0f172a';
+      ctx.stroke();
+
+      const eyeX = entity.x + entity.eyeOffset;
+      const eyeY = entity.y - entity.r * 0.48;
+      ctx.beginPath();
+      ctx.arc(eyeX, eyeY, 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(eyeX + (entity.eyeOffset > 0 ? 2 : -2), eyeY, 3, 0, Math.PI * 2);
+      ctx.fillStyle = '#0f172a';
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawBall() {
+      ctx.save();
+      ctx.translate(ball.x, ball.y);
+      ctx.rotate(ball.rotation);
+
+      ctx.beginPath();
+      ctx.arc(0, 0, ball.r, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#1e293b';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, ball.r * 0.75, -0.5, 1.5);
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, ball.r * 0.75, 2.2, 4.2);
+      ctx.strokeStyle = '#0284c7';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function drawBanner() {
+      if (bannerTimer > 0) {
+        bannerTimer--;
+        ctx.save();
+        ctx.font = 'bold 28px Segoe UI, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#0f172a';
+        ctx.fillText(statusBanner, W / 2, 110);
+        ctx.restore();
+      }
+    }
+
+    function loop() {
+      if (gameState === 'playing') {
+        handlePlayer1Input();
+        handleRightSideController();
+        updateBall();
+      }
+
+      drawBackground();
+      drawNet();
+      drawSlimeCharacter(player1);
+      drawSlimeCharacter(player2);
+      drawBall();
+      drawBanner();
+
+      requestAnimationFrame(loop);
+    }
+
+    updateModeLabels();
+    drawBackground();
+    drawNet();
+    drawSlimeCharacter(player1);
+    drawSlimeCharacter(player2);
+    drawBall();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
